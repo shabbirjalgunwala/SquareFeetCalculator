@@ -3,269 +3,258 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Square Feet & Quantity Calculator</title>
+    <title>Smart Auto-Parsing Measurements Calculator</title>
     <style>
+        * {
+            box-sizing: border-box;
+        }
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background-color: #f5f7fb;
+            background-color: #f4f6f9;
             color: #333;
             margin: 0;
-            padding: 20px;
+            padding: 15px;
         }
         .container {
-            max-width: 800px;
+            width: 100%;
+            max-width: 900px;
             margin: 0 auto;
             background: #ffffff;
-            padding: 30px;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
         }
-        h2 {
+        h2, h3 {
             margin-top: 0;
             color: #2c3e50;
-            border-bottom: 2px solid #ecf0f1;
-            padding-bottom: 10px;
         }
-        .row-container {
-            margin-bottom: 20px;
-        }
-        .calc-row {
-            display: grid;
-            grid-template-columns: 2fr 2fr 2fr 2fr auto;
-            gap: 15px;
-            align-items: center;
-            margin-bottom: 12px;
-            background: #fdfdfd;
-            padding: 10px;
-            border: 1px solid #eef2f5;
-            border-radius: 6px;
-        }
-        .input-group {
-            display: flex;
-            flex-direction: column;
-        }
-        .input-group label {
-            font-size: 12px;
-            color: #7f8c8d;
-            margin-bottom: 4px;
-            font-weight: 600;
-        }
-        input {
-            padding: 8px 12px;
-            border: 1px solid #ccd1d9;
+        .instruction-box {
+            background-color: #eef2f7;
+            border-left: 4px solid #3498db;
+            padding: 12px;
             border-radius: 4px;
             font-size: 14px;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+        textarea {
+            width: 100%;
+            height: 120px;
+            padding: 12px;
+            border: 2px solid #cbd5e1;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 14px;
+            resize: vertical;
             outline: none;
             transition: border-color 0.2s;
         }
-        input:focus {
+        textarea:focus {
             border-color: #3498db;
         }
-        .row-total-box {
-            font-weight: bold;
+        .btn-parse {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 24px;
             font-size: 15px;
-            color: #2c3e50;
-            padding-top: 20px;
-        }
-        button {
+            font-weight: bold;
+            border-radius: 6px;
             cursor: pointer;
-            font-weight: 600;
-            border-radius: 4px;
+            margin-top: 10px;
+            width: 100%;
             transition: background 0.2s;
         }
-        .btn-add {
-            background-color: #2ecc71;
-            color: white;
-            border: none;
-            padding: 10px 20px;
+        .btn-parse:hover {
+            background-color: #2980b9;
+        }
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+            margin-top: 25px;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
             font-size: 14px;
-            margin-bottom: 20px;
+            min-width: 500px; /* Ensures text doesn't squash too small */
         }
-        .btn-add:hover {
-            background-color: #27ae60;
+        th {
+            background-color: #f8fafc;
+            color: #475569;
+            font-weight: 600;
+            padding: 12px;
+            border-bottom: 2px solid #e2e8f0;
         }
-        .btn-delete {
-            background-color: #e74c3c;
-            color: white;
-            border: none;
-            padding: 8px 12px;
-            margin-top: 18px;
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #e2e8f0;
+            color: #334155;
         }
-        .btn-delete:hover {
-            background-color: #c0392b;
+        tr:hover {
+            background-color: #f8fafc;
         }
-        .summary-section {
-            background: #f8f9fa;
-            border-left: 4px solid #3498db;
-            padding: 15px 20px;
-            border-radius: 0 6px 6px 0;
+        .summary-card {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            padding: 20px;
+            border-radius: 8px;
             margin-top: 25px;
         }
         .summary-row {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 8px;
+            margin-bottom: 10px;
             font-size: 16px;
         }
-        .summary-row.final {
-            font-size: 18px;
+        .summary-row.grand-total {
+            font-size: 20px;
             font-weight: bold;
-            color: #2c3e50;
-            border-top: 1px solid #ddd;
-            padding-top: 8px;
-            margin-top: 8px;
-        }
-        .section-divider {
-            margin: 40px 0 30px 0;
-            border: 0;
-            border-top: 2px dashed #e2e8f0;
-        }
-        .quick-calc {
-            background: #fff8f0;
-            border: 1px solid #fee2e2;
-            padding: 20px;
-            border-radius: 6px;
-        }
-        .quick-calc-inputs {
-            display: flex;
-            gap: 15px;
-            align-items: center;
+            color: #166534;
+            border-top: 2px dashed #bbf7d0;
+            padding-top: 10px;
             margin-top: 10px;
+            margin-bottom: 0;
+        }
+        .badge {
+            background-color: #e2e8f0;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: bold;
         }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>Measurement Area Calculator</h2>
+    <h2>Smart Measurements Calculator</h2>
     
-    <!-- Add Row Trigger -->
-    <button type="button" class="btn-add" onclick="addRow()">+ Add Row</button>
-    
-    <!-- Dynamic Rows Container -->
-    <div id="rowContainer" class="row-container"></div>
-
-    <!-- Summary Totals -->
-    <div class="summary-section">
-        <div class="summary-row">
-            <span>Total Sum:</span>
-            <span id="grandTotal">0.00</span>
-        </div>
-        <div class="summary-row final">
-            <span>Final Area (Divided by 144):</span>
-            <span id="finalSqFt">0.00</span>
-        </div>
+    <div class="instruction-box">
+        <strong>How to copy/paste data:</strong> You can paste multiple rows or items below. The script automatically reads text line-by-line looking for numbers. 
+        <br><em>Example entry patterns it detects:</em> 
+        <br>• <code>38 x 2 x 5</code> (Size 1 × Size 2 × Quantity)
+        <br>• <code>Main Entrance Area: 12 * 10 * 2</code>
     </div>
 
-    <hr class="section-divider">
+    <!-- Paste Box -->
+    <h3 style="font-size: 16px; margin-bottom: 8px;">Paste Raw Measurement Text Data:</h3>
+    <textarea id="rawInput" placeholder="Paste data here...&#10;Example:&#10;38 multiply by 2&#10;12 x 10 x 4"></textarea>
+    <button class="btn-parse" onclick="processRawText()">Analyze & Process Measurements</button>
 
-    <!-- Secondary Amount Calculator -->
-    <div class="quick-calc">
-        <h3 style="margin-top:0; color: #d35400;">Quick Multiplier (Amount × Size)</h3>
-        <div class="quick-calc-inputs">
-            <div class="input-group">
-                <label>Amount / Rate</label>
-                <input type="number" id="quickAmount" value="38" oninput="calculateQuickTotal()">
-            </div>
-            <div style="font-weight: bold; margin-top: 15px;">×</div>
-            <div class="input-group">
-                <label>Size / Factor</label>
-                <input type="number" id="quickSize" value="2" oninput="calculateQuickTotal()">
-            </div>
-            <div style="font-weight: bold; margin-top: 15px;">=</div>
-            <div class="row-total-box" style="padding-top: 15px;">
-                <span id="quickResult">76.00</span>
-            </div>
+    <!-- Table Section with horizontal scroll wrapper to avoid layout breaking -->
+    <div class="table-responsive">
+        <table>
+            <thead>
+                <tr>
+                    <th width="10%">Sr. No</th>
+                    <th width="45%">Original Row Text Data Description</th>
+                    <th width="15%">Extracted Specs</th>
+                    <th width="15%">Raw Mult.</th>
+                    <th width="15%">Final Area (÷144)</th>
+                </tr>
+            </thead>
+            <tbody id="calculationRows">
+                <tr>
+                    <td colspan="5" style="text-align: center; color: #94a3b8; padding: 30px;">
+                        No data parsed yet. Paste dimensions into the box above and tap analyze.
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Calculations Result Cards Summary -->
+    <div class="summary-card">
+        <div class="summary-row">
+            <span>Total Evaluated Items Count:</span>
+            <span id="summaryCount" style="font-weight:600;">0</span>
+        </div>
+        <div class="summary-row">
+            <span>Aggregated Multiplication Total:</span>
+            <span id="summaryRawSum" style="font-weight:600;">0.00</span>
+        </div>
+        <div class="summary-row grand-total">
+            <span>Total Final SQFT:</span>
+            <span id="summaryFinalSqft">0.00 Sq.Ft</span>
         </div>
     </div>
 </div>
 
 <script>
-    // Automatically add the first row on page load
-    window.onload = function() {
-        addRow();
-        calculateQuickTotal();
-    };
+    function processRawText() {
+        const inputText = document.getElementById('rawInput').value;
+        const tbody = document.getElementById('calculationRows');
+        
+        // Clean out previous states
+        tbody.innerHTML = '';
+        
+        // Split by lines
+        const lines = inputText.split(/\r?\n/);
+        
+        let validItemCounter = 0;
+        let cumulativeRawSum = 0;
 
-    // Function to dynamically inject a new measurement row
-    function addRow() {
-        const container = document.getElementById('rowContainer');
-        const rowId = 'row_' + Date.now();
+        lines.forEach((line) => {
+            const trimmedLine = line.trim();
+            if (!trimmedLine) return; // Skip completely empty lines
 
-        const rowHtml = `
-            <div class="calc-row" id="${rowId}">
-                <div class="input-group">
-                    <label>First Size</label>
-                    <input type="number" class="size1" value="0" oninput="calculateRowTotal(this)">
-                </div>
-                <div class="input-group">
-                    <label>Second Size</label>
-                    <input type="number" class="size2" value="0" oninput="calculateRowTotal(this)">
-                </div>
-                <div class="input-group">
-                    <label>Quantity</label>
-                    <input type="number" class="qty" value="1" oninput="calculateRowTotal(this)">
-                </div>
-                <div class="input-group">
-                    <label>Row Total</label>
-                    <div class="row-total-box"><span class="row-total">0.00</span></div>
-                </div>
-                <div>
-                    <button type="button" class="btn-delete" onclick="deleteRow('${rowId}')">Delete</button>
-                </div>
-            </div>
-        `;
-        container.insertAdjacentHTML('beforeend', rowHtml);
-        updateGrandTotals();
-    }
+            // Regex looks globally for any continuous block of decimals or integers
+            const foundNumbers = trimmedLine.match(/\d+(\.\d+)?/g);
 
-    // Function to drop a row out of the calculation matrix
-    function deleteRow(rowId) {
-        const row = document.getElementById(rowId);
-        if (row) {
-            row.remove();
-            updateGrandTotals();
-        }
-    }
+            if (foundNumbers && foundNumbers.length >= 2) {
+                validItemCounter++;
 
-    // Compute subtotal for an individual row layout
-    function calculateRowTotal(inputElement) {
-        const row = inputElement.closest('.calc-row');
-        const size1 = parseFloat(row.querySelector('.size1').value) || 0;
-        const size2 = parseFloat(row.querySelector('.size2').value) || 0;
-        const qty = parseFloat(row.querySelector('.qty').value) || 0;
+                // Extract parameters safely
+                const size1 = parseFloat(foundNumbers[0]);
+                const size2 = parseFloat(foundNumbers[1]);
+                
+                // If a 3rd number is explicitly specified (like a quantity multiplier), use it. 
+                // Otherwise fall back safely to 1.
+                const quantity = (foundNumbers.length >= 3) ? parseFloat(foundNumbers[2]) : 1;
 
-        const total = size1 * size2 * qty;
-        row.querySelector('.row-total').innerText = total.toFixed(2);
+                // Calculate product sequence rules
+                const lineProduct = size1 * size2 * quantity;
+                const convertedSqFt = lineProduct / 144;
 
-        updateGrandTotals();
-    }
+                // Build metric tracking accumulators
+                cumulativeRawSum += lineProduct;
 
-    // Accumulate all rows and execute the division operation
-    function updateGrandTotals() {
-        const rowTotals = document.querySelectorAll('.row-total');
-        let sum = 0;
-
-        rowTotals.forEach(box => {
-            sum += parseFloat(box.innerText) || 0;
+                // Generate table template elements securely
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td><strong>#${validItemCounter}</strong></td>
+                    <td style="word-break: break-all; color: #64748b; font-style: italic;">"${trimmedLine}"</td>
+                    <td><span class="badge">${size1}</span> × <span class="badge">${size2}</span> × <span class="badge">Qty: ${quantity}</span></td>
+                    <td style="font-weight: 500;">${lineProduct.toFixed(2)}</td>
+                    <td style="font-weight: bold; color: #2c3e50;">${convertedSqFt.toFixed(2)}</td>
+                `;
+                tbody.appendChild(row);
+            }
         });
 
-        const dividedTotal = sum / 144;
+        // Corner Case Handling: if no readable specs could be isolated
+        if (validItemCounter === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="5" style="text-align: center; color: #ef4444; padding: 30px; font-weight: 500;">
+                        Could not isolate numerical patterns. Please ensure columns include at least 2 structural sizing values.
+                    </td>
+                </tr>
+            `;
+        }
 
-        document.getElementById('grandTotal').innerText = sum.toFixed(2);
-        document.getElementById('finalSqFt').innerText = dividedTotal.toFixed(2);
-    }
-
-    // Separate logic for the quick-calc section at the bottom
-    function calculateQuickTotal() {
-        const amount = parseFloat(document.getElementById('quickAmount').value) || 0;
-        const size = parseFloat(document.getElementById('quickSize').value) || 0;
+        // Output final data down inside summary components
+        document.getElementById('summaryCount').innerText = validItemCounter;
+        document.getElementById('summaryRawSum').innerText = cumulativeRawSum.toFixed(2);
         
-        const result = amount * size;
-        document.getElementById('quickResult').innerText = result.toFixed(2);
+        const finalGrandSqft = cumulativeRawSum / 144;
+        document.getElementById('summaryFinalSqft').innerText = finalGrandSqft.toFixed(2) + " Sq.Ft";
     }
 </script>
 
 </body>
-  </html>
-  
+</html>
