@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart Auto-Parsing Measurements Calculator</title>
+    <title>Smart Auto-Parsing Measurements Calculator (Multiple of 3 Rule)</title>
     <style>
         * {
             box-sizing: border-box;
@@ -17,7 +17,7 @@
         }
         .container {
             width: 100%;
-            max-width: 900px;
+            max-width: 950px;
             margin: 0 auto;
             background: #ffffff;
             padding: 20px;
@@ -30,7 +30,7 @@
         }
         .instruction-box {
             background-color: #eef2f7;
-            border-left: 4px solid #3498db;
+            border-left: 4px solid #2ecc71;
             padding: 12px;
             border-radius: 4px;
             font-size: 14px;
@@ -50,10 +50,10 @@
             transition: border-color 0.2s;
         }
         textarea:focus {
-            border-color: #3498db;
+            border-color: #2ecc71;
         }
         .btn-parse {
-            background-color: #3498db;
+            background-color: #2ecc71;
             color: white;
             border: none;
             padding: 12px 24px;
@@ -66,7 +66,7 @@
             transition: background 0.2s;
         }
         .btn-parse:hover {
-            background-color: #2980b9;
+            background-color: #27ae60;
         }
         .table-responsive {
             width: 100%;
@@ -80,7 +80,7 @@
             border-collapse: collapse;
             text-align: left;
             font-size: 14px;
-            min-width: 500px; /* Ensures text doesn't squash too small */
+            min-width: 650px; 
         }
         th {
             background-color: #f8fafc;
@@ -123,7 +123,15 @@
             background-color: #e2e8f0;
             padding: 2px 6px;
             border-radius: 4px;
-            font-size: 11px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .badge-rounded {
+            background-color: #dcfce7;
+            color: #166534;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 12px;
             font-weight: bold;
         }
     </style>
@@ -134,32 +142,32 @@
     <h2>Smart Measurements Calculator</h2>
     
     <div class="instruction-box">
-        <strong>How to copy/paste data:</strong> You can paste multiple rows or items below. The script automatically reads text line-by-line looking for numbers. 
-        <br><em>Example entry patterns it detects:</em> 
-        <br>• <code>38 x 2 x 5</code> (Size 1 × Size 2 × Quantity)
-        <br>• <code>Main Entrance Area: 12 * 10 * 2</code>
+        <strong>Multiple of 3 Rule Active:</strong> The script reads your text and automatically checks sizes. If a size is not a multiple of 3, it automatically rounds it up to the <strong>nearest bigger multiple of 3</strong> before calculating.
+        <br>• Input <code>2 x 6</code> → Automatically calculates as <code>3 x 6</code>
+        <br>• Input <code>2 x 7</code> → Automatically calculates as <code>3 x 9</code>
     </div>
 
     <!-- Paste Box -->
     <h3 style="font-size: 16px; margin-bottom: 8px;">Paste Raw Measurement Text Data:</h3>
-    <textarea id="rawInput" placeholder="Paste data here...&#10;Example:&#10;38 multiply by 2&#10;12 x 10 x 4"></textarea>
+    <textarea id="rawInput" placeholder="Paste data here...&#10;Example:&#10;38 multiply by 2&#10;2 x 7 x 2"></textarea>
     <button class="btn-parse" onclick="processRawText()">Analyze & Process Measurements</button>
 
-    <!-- Table Section with horizontal scroll wrapper to avoid layout breaking -->
+    <!-- Table Section -->
     <div class="table-responsive">
         <table>
             <thead>
                 <tr>
-                    <th width="10%">Sr. No</th>
-                    <th width="45%">Original Row Text Data Description</th>
-                    <th width="15%">Extracted Specs</th>
-                    <th width="15%">Raw Mult.</th>
-                    <th width="15%">Final Area (÷144)</th>
+                    <th width="8%">Sr. No</th>
+                    <th width="32%">Original Text Data</th>
+                    <th width="18%">Original Specs</th>
+                    <th width="18%">Rounded Specs (Mult. of 3)</th>
+                    <th width="12%">Raw Mult.</th>
+                    <th width="12%">Final Sq.Ft (÷144)</th>
                 </tr>
             </thead>
             <tbody id="calculationRows">
                 <tr>
-                    <td colspan="5" style="text-align: center; color: #94a3b8; padding: 30px;">
+                    <td colspan="6" style="text-align: center; color: #94a3b8; padding: 30px;">
                         No data parsed yet. Paste dimensions into the box above and tap analyze.
                     </td>
                 </tr>
@@ -174,7 +182,7 @@
             <span id="summaryCount" style="font-weight:600;">0</span>
         </div>
         <div class="summary-row">
-            <span>Aggregated Multiplication Total:</span>
+            <span>Aggregated Multiplication Total (Using Rounded Sizes):</span>
             <span id="summaryRawSum" style="font-weight:600;">0.00</span>
         </div>
         <div class="summary-row grand-total">
@@ -185,6 +193,12 @@
 </div>
 
 <script>
+    // Helper function to round numbers to the nearest larger multiple of 3
+    function roundUpToMultipleOf3(num) {
+        if (num <= 0) return 0;
+        return Math.ceil(num / 3) * 3;
+    }
+
     function processRawText() {
         const inputText = document.getElementById('rawInput').value;
         const tbody = document.getElementById('calculationRows');
@@ -202,33 +216,38 @@
             const trimmedLine = line.trim();
             if (!trimmedLine) return; // Skip completely empty lines
 
-            // Regex looks globally for any continuous block of decimals or integers
+            // Find all number patterns in the string
             const foundNumbers = trimmedLine.match(/\d+(\.\d+)?/g);
 
             if (foundNumbers && foundNumbers.length >= 2) {
                 validItemCounter++;
 
-                // Extract parameters safely
-                const size1 = parseFloat(foundNumbers[0]);
-                const size2 = parseFloat(foundNumbers[1]);
+                // Extract original numbers
+                const origSize1 = parseFloat(foundNumbers[0]);
+                const origSize2 = parseFloat(foundNumbers[1]);
                 
-                // If a 3rd number is explicitly specified (like a quantity multiplier), use it. 
-                // Otherwise fall back safely to 1.
+                // If a 3rd number is explicitly specified, use it as quantity. Otherwise default to 1.
+                // Quantity doesn't need to be a multiple of 3, so we keep it as is.
                 const quantity = (foundNumbers.length >= 3) ? parseFloat(foundNumbers[2]) : 1;
 
-                // Calculate product sequence rules
-                const lineProduct = size1 * size2 * quantity;
+                // Apply the 'Multiple of 3' rule to the sizes
+                const finalSize1 = roundUpToMultipleOf3(origSize1);
+                const finalSize2 = roundUpToMultipleOf3(origSize2);
+
+                // Calculate product sequence using the adjusted sizes
+                const lineProduct = finalSize1 * finalSize2 * quantity;
                 const convertedSqFt = lineProduct / 144;
 
-                // Build metric tracking accumulators
+                // Accumulate totals
                 cumulativeRawSum += lineProduct;
 
-                // Generate table template elements securely
+                // Generate table row elements
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td><strong>#${validItemCounter}</strong></td>
                     <td style="word-break: break-all; color: #64748b; font-style: italic;">"${trimmedLine}"</td>
-                    <td><span class="badge">${size1}</span> × <span class="badge">${size2}</span> × <span class="badge">Qty: ${quantity}</span></td>
+                    <td><span class="badge">${origSize1}</span> × <span class="badge">${origSize2}</span></td>
+                    <td><span class="badge-rounded">${finalSize1}</span> × <span class="badge-rounded">${finalSize2}</span> × <span class="badge" style="background:#e0f2fe; color:#0369a1">Qty: ${quantity}</span></td>
                     <td style="font-weight: 500;">${lineProduct.toFixed(2)}</td>
                     <td style="font-weight: bold; color: #2c3e50;">${convertedSqFt.toFixed(2)}</td>
                 `;
@@ -236,11 +255,11 @@
             }
         });
 
-        // Corner Case Handling: if no readable specs could be isolated
+        // Error message if no usable numbers were spotted
         if (validItemCounter === 0) {
             tbody.innerHTML = `
                 <tr>
-                    <td colspan="5" style="text-align: center; color: #ef4444; padding: 30px; font-weight: 500;">
+                    <td colspan="6" style="text-align: center; color: #ef4444; padding: 30px; font-weight: 500;">
                         Could not isolate numerical patterns. Please ensure columns include at least 2 structural sizing values.
                     </td>
                 </tr>
